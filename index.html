@@ -8,7 +8,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        /* Ukrywanie strzałek w inputach typu number */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -134,7 +133,7 @@
                 "Tunezja": "Tunezja", "Hiszpania": "Hiszpania", "Rep. Zielonego Prz.": "Rep. Zielonego Prz.",
                 "Belgia": "Belgia", "Egipt": "Egipt", "Arabia Saudyjska": "Arabia Saudyjska", "Urugwaj": "Urugwaj",
                 "Iran": "Iran", "Nowa Zelandia": "Nowa Zelandia", "Francja": "Francja", "Senegal": "Senegal",
-                "Irak": "Irak", "Norwegia": "Norwegia", "Argentyna": "Argentyna", "Algieria": "Algieria",
+                "Irak": "Irak", "Norwegia": "Norway", "Argentyna": "Argentyna", "Algieria": "Algieria",
                 "Austria": "Austria", "Jordania": "Jordania", "Portugalia": "Portugalia", "DR Kongo": "DR Kongo",
                 "Anglia": "Anglia", "Chorwacja": "Chorwacja", "Ghana": "Ghana", "Panama": "Panama",
                 "Uzbekistan": "Uzbekistan", "Kolumbia": "Kolumbia"
@@ -159,6 +158,10 @@
         let currentLang = 'pl';
         let nickname = '';
         let currentFilter = 'all';
+
+        // Zmienne do przechowywania bezpiecznego czasu serwera
+        let serverTimeAtLoad = null;
+        let loadPerformanceTime = null;
 
         const matches = [
             // KOLEJKA 1
@@ -240,6 +243,15 @@
             { id: 72, round: 3, date: "27.06.2026", time: "22:00", teamA: "Jordania", teamB: "Argentyna", scoreA: "", scoreB: "" }
         ];
 
+        // Bezpieczna funkcja zwracająca aktualny czas odporny na manipulacje systemowe
+        function getTrueNow() {
+            if (serverTimeAtLoad !== null && loadPerformanceTime !== null) {
+                const elapsedSinceLoad = performance.now() - loadPerformanceTime;
+                return new Date(serverTimeAtLoad + elapsedSinceLoad);
+            }
+            return new Date(); // Fallback w razie błędu sieci
+        }
+
         function isMatchLocked(match) {
             const dateParts = match.date.split('.'); 
             const timeParts = match.time.split(':'); 
@@ -252,8 +264,23 @@
                 parseInt(timeParts[1])
             );
             
-            const now = new Date();
-            return now >= matchDateTime;
+            return getTrueNow() >= matchDateTime;
+        }
+
+        async function syncTimeWithServer() {
+            try {
+                // Wysyłamy zapytanie HEAD do własnej strony na GitHubie (pobiera tylko nagłówki, ultra lekkie)
+                const response = await fetch(window.location.href, { method: 'HEAD' });
+                const serverDateStr = response.headers.get('Date');
+                if (serverDateStr) {
+                    serverTimeAtLoad = new Date(serverDateStr).getTime();
+                    loadPerformanceTime = performance.now();
+                }
+            } catch (e) {
+                console.warn("Nie udało się pobrać czasu serwera. Używam czasu lokalnego.");
+                serverTimeAtLoad = Date.now();
+                loadPerformanceTime = performance.now();
+            }
         }
 
         function toggleLanguage() {
@@ -310,7 +337,6 @@
             renderMatches();
         }
 
-        // Nowa funkcja pomocnicza: renderuje środek jednej, konkretnej karty meczu
         function renderSingleCard(card, match) {
             const locked = isMatchLocked(match);
             card.dataset.locked = locked ? "true" : "false";
@@ -380,7 +406,7 @@
                 }
 
                 const card = document.createElement('div');
-                card.id = 'match-card-' + match.id; // Nadanie unikalnego ID dla karty
+                card.id = 'match-card-' + match.id;
                 
                 renderSingleCard(card, match);
                 container.appendChild(card);
@@ -444,14 +470,16 @@
             URL.revokeObjectURL(link.href);
         }
 
-        window.onload = function() {
+        window.onload = async function() {
             updateTexts();
             
-            // AUTOMATYCZNY INTERWAŁ (Działa w tle co 5 sekund)
+            // 1. Pobierz prawdziwy czas serwera przed uruchomieniem czegokolwiek
+            await syncTimeWithServer();
+            
+            // 2. Co 5 sekund sprawdzaj mecze bez przeładowywania wpisanych danych
             setInterval(function() {
                 matches.forEach(match => {
                     const card = document.getElementById('match-card-' + match.id);
-                    // Odświeża pojedynczy mecz TYLKO wtedy, gdy był otwarty (false), ale czas minął
                     if (card && card.dataset.locked === "false" && isMatchLocked(match)) {
                         renderSingleCard(card, match);
                     }

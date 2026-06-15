@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundial 2026 Predictor - Pełna Faza Grupowa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        /* Ukrywanie strzałek w inputach typu number */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 flex flex-col min-h-screen justify-between">
+
+    <div class="flex-grow container mx-auto px-4 py-8 max-w-4xl">
+        
+        <header class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">⚽</span>
+                <h1 id="main-title" class="text-xl md:text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                    Typer Mistrzostw Świata 2026
+                </h1>
+            </div>
+            <button id="lang-btn" onclick="toggleLanguage()" class="bg-slate-800 hover:bg-slate-700 text-sm font-semibold py-2 px-4 rounded-lg border border-slate-700 transition duration-200 cursor-pointer">
+                🇬🇧 EN
+            </button>
+        </header>
+
+        <div id="login-screen" class="bg-slate-800/50 backdrop-blur-md p-8 rounded-2xl border border-slate-700 max-w-md mx-auto my-12 shadow-xl">
+            <h2 id="login-heading" class="text-xl font-semibold mb-4 text-center">Wprowadź swój nick z Discorda</h2>
+            <div class="space-y-4">
+                <input type="text" id="nickname-input" placeholder="np. Zmiks#1234" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-400 transition">
+                <button onclick="startApp()" id="login-btn" class="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-slate-950 font-bold py-3 rounded-lg transition duration-200 cursor-pointer shadow-lg shadow-emerald-500/20">
+                    Wejdź do gry
+                </button>
+            </div>
+        </div>
+
+        <div id="main-content" class="hidden space-y-6">
+            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                <p class="text-slate-300"><span id="welcome-text">Gracz</span>: <strong id="user-display" class="text-emerald-400"></strong></p>
+                <p id="instruction-text" class="text-xs text-slate-400">Obstaw wyniki wszystkich 3 kolejek grupowej fazy.</p>
+            </div>
+
+            <div class="flex flex-wrap gap-2 justify-center bg-slate-950/40 p-2 rounded-xl border border-slate-800">
+                <button onclick="filterRound('all')" id="filter-all" class="px-4 py-2 rounded-lg text-sm font

@@ -40,7 +40,7 @@
             <div class="space-y-4">
                 <input type="text" id="nickname-input" placeholder="np. Zmiks#1234" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-400 transition">
                 <button onclick="startApp()" id="login-btn" class="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-slate-950 font-bold py-3 rounded-lg transition duration-200 cursor-pointer shadow-lg shadow-emerald-500/20">
-                    Wejdź do gry
+                    Obstaw
                 </button>
             </div>
         </div>
@@ -52,4 +52,132 @@
             </div>
 
             <div class="flex flex-wrap gap-2 justify-center bg-slate-950/40 p-2 rounded-xl border border-slate-800">
-                <button onclick="filterRound('all')" id="filter-all" class="px-4 py-2 rounded-lg text-sm font
+                <button onclick="filterRound('all')" id="filter-all" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-emerald-500 text-slate-950 cursor-pointer">Wszystkie / All</button>
+                <button onclick="filterRound(1)" id="filter-1" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">Kolejka / Round 1</button>
+                <button onclick="filterRound(2)" id="filter-2" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">Kolejka / Round 2</button>
+                <button onclick="filterRound(3)" id="filter-3" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">Kolejka / Round 3</button>
+            </div>
+
+            <div id="matches-container" class="space-y-3"></div>
+
+            <div class="text-center pt-6">
+                <button onclick="generateFile()" id="download-btn" class="bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-slate-950 font-bold py-4 px-8 rounded-xl text-lg transition duration-200 cursor-pointer shadow-lg shadow-cyan-500/20 inline-flex items-center gap-2">
+                    📥 <span id="btn-text-download">Wygeneruj plik z typami</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="bg-slate-950/80 border-t border-slate-800 py-6 mt-12 text-center text-sm text-slate-500">
+        <p>Powered by <strong class="text-slate-300">Zmiks</strong> for <strong class="text-slate-300">Unknown</strong></p>
+    </footer>
+
+    <script>
+        const langData = {
+            pl: {
+                title: "Typer Mistrzostw Świata 2026",
+                loginHeading: "Wprowadź swój nick z Discorda",
+                loginBtn: "Obstaw",
+                welcome: "Gracz",
+                instruction: "Obstaw wyniki 3 pierwszych kolejek. Mecze z przeszłości są automatycznie zablokowane.",
+                downloadBtn: "Wygeneruj plik z typami",
+                alertNick: "Proszę podać nick!",
+                alertFinished: "Wypełnij wszystkie dostępne (niezablokowane) mecze w wybranej puli przed wygenerowaniem pliku!",
+                langBtn: "🇬🇧 EN",
+                lockedTag: "Zakończony",
+                placeholder: "Twój nick z DC..."
+            },
+            en: {
+                title: "World Cup 2026 Predictor",
+                loginHeading: "Enter your Discord nickname",
+                loginBtn: "Predict",
+                welcome: "Player",
+                instruction: "Predict the scores for the first 3 rounds. Past matches are automatically locked.",
+                downloadBtn: "Generate prediction file",
+                alertNick: "Please enter your nickname!",
+                alertFinished: "Please fill in all available (unlocked) matches in the selection before generating the file!",
+                langBtn: "🇵🇱 PL",
+                lockedTag: "Finished",
+                placeholder: "Your DC nick..."
+            }
+        };
+
+        let currentLang = 'pl';
+        let nickname = '';
+        let currentFilter = 'all';
+
+        // Oczyszczona z błędów formatowania baza danych 72 meczów (11.06 - 27.06)
+        const matches = [
+            // KOLEJKA 1
+            { id: 1, round: 1, date: "11.06.2026", time: "19:00", teamA: "Meksyk 🇲🇽", teamB: "RPA 🇿🇦", locked: true, scoreA: 2, scoreB: 1 },
+            { id: 2, round: 1, date: "12.06.2026", time: "02:00", teamA: "Korea Płd. 🇰🇷", teamB: "Czechy 🇨🇿", locked: true, scoreA: 0, scoreB: 1 },
+            { id: 3, round: 1, date: "12.06.2026", time: "19:00", teamA: "Kanada 🇨🇦", teamB: "Bośnia i Herc. 🇧🇦", locked: true, scoreA: 2, scoreB: 0 },
+            { id: 4, round: 1, date: "13.06.2026", time: "01:00", teamA: "USA 🇺🇸", teamB: "Paragwaj 🇵🇾", locked: true, scoreA: 1, scoreB: 1 },
+            { id: 5, round: 1, date: "13.06.2026", time: "19:00", teamA: "Katar 🇶🇦", teamB: "Szwajcaria 🇨🇭", locked: true, scoreA: 1, scoreB: 1 },
+            { id: 6, round: 1, date: "13.06.2026", time: "22:00", teamA: "Brazylia 🇧🇷", teamB: "Maroko 🇲🇦", locked: true, scoreA: 1, scoreB: 1 },
+            { id: 7, round: 1, date: "14.06.2026", time: "01:00", teamA: "Haiti 🇭🇹", teamB: "Szkocja 🏴󠁧󠁢󠁳󠁣󠁴󠁿", locked: true, scoreA: 0, scoreB: 1 },
+            { id: 8, round: 1, date: "14.06.2026", time: "04:00", teamA: "Australia 🇦🇺", teamB: "Turcja 🇹🇷", locked: true, scoreA: 2, scoreB: 0 },
+            { id: 9, round: 1, date: "14.06.2026", time: "17:00", teamA: "Niemcy 🇩🇪", teamB: "Curacao 🇨🇼", locked: true, scoreA: 7, scoreB: 1 },
+            { id: 10, round: 1, date: "14.06.2026", time: "20:00", teamA: "Holandia 🇳🇱", teamB: "Japonia 🇯🇵", locked: true, scoreA: 2, scoreB: 2 },
+            { id: 11, round: 1, date: "14.06.2026", time: "23:00", teamA: "Wybrzeże Kości Sł. 🇨🇮", teamB: "Ekwador 🇪🇨", locked: true, scoreA: 1, scoreB: 0 },
+            { id: 12, round: 1, date: "15.06.2026", time: "02:00", teamA: "Szwecja 🇸🇪", teamB: "Tunezja 🇹🇳", locked: true, scoreA: 5, scoreB: 1 },
+            { id: 13, round: 1, date: "15.06.2026", time: "18:00", teamA: "Hiszpania 🇪🇸", teamB: "Rep. Zielonego Prz. 🇨🇻", locked: true, scoreA: 0, scoreB: 0 },
+            { id: 14, round: 1, date: "15.06.2026", time: "21:00", teamA: "Belgia 🇧🇪", teamB: "Egipt 🇪🇬", locked: true, scoreA: 1, scoreB: 1 },
+            { id: 15, round: 1, date: "16.06.2026", time: "00:00", teamA: "Arabia Saudyjska 🇸🇦", teamB: "Urugwaj 🇺🇾", locked: false, scoreA: "", scoreB: "" },
+            { id: 16, round: 1, date: "16.06.2026", time: "03:00", teamA: "Iran 🇮🇷", teamB: "Nowa Zelandia 🇳🇿", locked: false, scoreA: "", scoreB: "" },
+            { id: 17, round: 1, date: "16.06.2026", time: "21:00", teamA: "Francja 🇫🇷", teamB: "Senegal 🇸🇳", locked: false, scoreA: "", scoreB: "" },
+            { id: 18, round: 1, date: "17.06.2026", time: "00:00", teamA: "Irak 🇮🇶", teamB: "Norwegia 🇳🇴", locked: false, scoreA: "", scoreB: "" },
+            { id: 19, round: 1, date: "17.06.2026", time: "03:00", teamA: "Argentyna 🇦🇷", teamB: "Algieria 🇩🇿", locked: false, scoreA: "", scoreB: "" },
+            { id: 20, round: 1, date: "17.06.2026", time: "06:00", teamA: "Austria 🇦🇹", teamB: "Jordania 🇯🇴", locked: false, scoreA: "", scoreB: "" },
+            { id: 21, round: 1, date: "17.06.2026", time: "19:00", teamA: "Portugalia 🇵🇹", teamB: "DR Kongo 🇨🇩", locked: false, scoreA: "", scoreB: "" },
+            { id: 22, round: 1, date: "17.06.2026", time: "22:00", teamA: "Anglia 🏴󠁧󠁢󠁥󠁮󠁧󠁿", teamB: "Chorwacja 🇭🇷", locked: false, scoreA: "", scoreB: "" },
+            { id: 23, round: 1, date: "18.06.2026", time: "01:00", teamA: "Ghana 🇬🇭", teamB: "Panama 🇵🇦", locked: false, scoreA: "", scoreB: "" },
+            { id: 24, round: 1, date: "18.06.2026", time: "04:00", teamA: "Uzbekistan 🇺🇿", teamB: "Kolumbia 🇨🇴", locked: false, scoreA: "", scoreB: "" },
+
+            // KOLEJKA 2
+            { id: 25, round: 2, date: "18.06.2026", time: "18:00", teamA: "Czechy 🇨🇿", teamB: "RPA 🇿🇦", locked: false, scoreA: "", scoreB: "" },
+            { id: 26, round: 2, date: "19.06.2026", time: "00:00", teamA: "Szwajcaria 🇨🇭", teamB: "Bośnia i Herc. 🇧🇦", locked: false, scoreA: "", scoreB: "" },
+            { id: 27, round: 2, date: "19.06.2026", time: "03:00", teamA: "Kanada 🇨🇦", teamB: "Katar 🇶🇦", locked: false, scoreA: "", scoreB: "" },
+            { id: 28, round: 2, date: "19.06.2026", time: "06:00", teamA: "Meksyk 🇲🇽", teamB: "Korea Płd. 🇰🇷", locked: false, scoreA: "", scoreB: "" },
+            { id: 29, round: 2, date: "19.06.2026", time: "21:00", teamA: "USA 🇺🇸", teamB: "Australia 🇦🇺", locked: false, scoreA: "", scoreB: "" },
+            { id: 30, round: 2, date: "20.06.2026", time: "00:00", teamA: "Szkocja 🏴󠁧󠁢󠁳󠁣󠁴󠁿", teamB: "Maroko 🇲🇦", locked: false, scoreA: "", scoreB: "" },
+            { id: 31, round: 2, date: "20.06.2026", time: "06:00", teamA: "Brazylia 🇧🇷", teamB: "Haiti 🇭🇹", locked: false, scoreA: "", scoreB: "" },
+            { id: 32, round: 2, date: "20.06.2026", time: "08:30", teamA: "Turcja 🇹🇷", teamB: "Paragwaj 🇵🇾", locked: false, scoreA: "", scoreB: "" },
+            { id: 33, round: 2, date: "20.06.2026", time: "22:30", teamA: "Holandia 🇳🇱", teamB: "Szwecja 🇸🇪", locked: false, scoreA: "", scoreB: "" },
+            { id: 34, round: 2, date: "21.06.2026", time: "01:30", teamA: "Niemcy 🇩🇪", teamB: "Wybrzeże Kości Sł. 🇨🇮", locked: false, scoreA: "", scoreB: "" },
+            { id: 35, round: 2, date: "21.06.2026", time: "05:30", teamA: "Ekwador 🇪🇨", teamB: "Curacao 🇨🇼", locked: false, scoreA: "", scoreB: "" },
+            { id: 36, round: 2, date: "21.06.2026", time: "09:30", teamA: "Tunezja 🇹🇳", teamB: "Japonia 🇯🇵", locked: false, scoreA: "", scoreB: "" },
+            { id: 37, round: 2, date: "21.06.2026", time: "21:30", teamA: "Hiszpania 🇪🇸", teamB: "Arabia Saudyjska 🇸🇦", locked: false, scoreA: "", scoreB: "" },
+            { id: 38, round: 2, date: "22.06.2026", time: "00:30", teamA: "Belgia 🇧🇪", teamB: "Iran 🇮🇷", locked: false, scoreA: "", scoreB: "" },
+            { id: 39, round: 2, date: "22.06.2026", time: "03:30", teamA: "Urugwaj 🇺🇾", teamB: "Rep. Zielonego Prz. 🇨🇻", locked: false, scoreA: "", scoreB: "" },
+            { id: 40, round: 2, date: "22.06.2026", time: "06:30", teamA: "Nowa Zelandia 🇳🇿", teamB: "Egipt 🇪🇬", locked: false, scoreA: "", scoreB: "" },
+            { id: 41, round: 2, date: "22.06.2026", time: "22:30", teamA: "Argentyna 🇦🇷", teamB: "Austria 🇦🇹", locked: false, scoreA: "", scoreB: "" },
+            { id: 42, round: 2, date: "23.06.2026", time: "02:30", teamA: "Francja 🇫🇷", teamB: "Irak 🇮🇶", locked: false, scoreA: "", scoreB: "" },
+            { id: 43, round: 2, date: "23.06.2026", time: "05:30", teamA: "Norwegia 🇳🇴", teamB: "Senegal 🇸🇳", locked: false, scoreA: "", scoreB: "" },
+            { id: 44, round: 2, date: "23.06.2026", time: "08:30", teamA: "Jordania 🇯🇴", teamB: "Algieria 🇩🇿", locked: false, scoreA: "", scoreB: "" },
+            { id: 45, round: 2, date: "23.06.2026", time: "22:30", teamA: "Portugalia 🇵🇹", teamB: "Uzbekistan 🇺🇿", locked: false, scoreA: "", scoreB: "" },
+            { id: 46, round: 2, date: "24.06.2026", time: "01:30", teamA: "Anglia 🏴󠁧󠁢󠁥󠁮󠁧󠁿", teamB: "Ghana 🇬🇭", locked: false, scoreA: "", scoreB: "" },
+            { id: 47, round: 2, date: "24.06.2026", time: "04:30", teamA: "Panama 🇵🇦", teamB: "Chorwacja 🇭🇷", locked: false, scoreA: "", scoreB: "" },
+            { id: 48, round: 2, date: "24.06.2026", time: "07:30", teamA: "Kolumbia 🇨🇴", teamB: "DR Kongo 🇨🇩", locked: false, scoreA: "", scoreB: "" },
+
+            // KOLEJKA 3
+            { id: 49, round: 3, date: "24.06.2026", time: "21:00", teamA: "Szwajcaria 🇨🇭", teamB: "Kanada 🇨🇦", locked: false, scoreA: "", scoreB: "" },
+            { id: 50, round: 3, date: "24.06.2026", time: "21:00", teamA: "Bośnia i Herc. 🇧🇦", teamB: "Katar 🇶🇦", locked: false, scoreA: "", scoreB: "" },
+            { id: 51, round: 3, date: "25.06.2026", time: "00:00", teamA: "Maroko 🇲🇦", teamB: "Haiti 🇭🇹", locked: false, scoreA: "", scoreB: "" },
+            { id: 52, round: 3, date: "25.06.2026", time: "00:00", teamA: "Szkocja 🏴󠁧󠁢󠁳󠁣󠁴󠁿", teamB: "Brazylia 🇧🇷", locked: false, scoreA: "", scoreB: "" },
+            { id: 53, round: 3, date: "25.06.2026", time: "06:30", teamA: "RPA 🇿🇦", teamB: "Korea Płd. 🇰🇷", locked: false, scoreA: "", scoreB: "" },
+            { id: 54, round: 3, date: "25.06.2026", time: "06:30", teamA: "Czechy 🇨🇿", teamB: "Meksyk 🇲🇽", locked: false, scoreA: "", scoreB: "" },
+            { id: 55, round: 3, date: "25.06.2026", time: "22:00", teamA: "Curacao 🇨🇼", teamB: "Wybrzeże Kości Sł. 🇨🇮", locked: false, scoreA: "", scoreB: "" },
+            { id: 56, round: 3, date: "25.06.2026", time: "22:00", teamA: "Ekwador 🇪🇨", teamB: "Niemcy 🇩🇪", locked: false, scoreA: "", scoreB: "" },
+            { id: 57, round: 3, date: "26.06.2026", time: "01:00", teamA: "Tunezja 🇹🇳", teamB: "Holandia 🇳🇱", locked: false, scoreA: "", scoreB: "" },
+            { id: 58, round: 3, date: "26.06.2026", time: "01:00", teamA: "Japonia 🇯🇵", teamB: "Szwecja 🇸🇪", locked: false, scoreA: "", scoreB: "" },
+            { id: 59, round: 3, date: "26.06.2026", time: "04:00", teamA: "Turcja 🇹🇷", teamB: "USA 🇺🇸", locked: false, scoreA: "", scoreB: "" },
+            { id: 60, round: 3, date: "26.06.2026", time: "04:00", teamA: "Paragwaj 🇵🇾", teamB: "Australia 🇦🇺", locked: false, scoreA: "", scoreB: "" },
+            { id: 61, round: 3, date: "26.06.2026", time: "21:00", teamA: "Norwegia 🇳🇴", teamB: "Francja 🇫🇷", locked: false, scoreA: "", scoreB: "" },
+            { id: 62, round: 3, date: "26.06.2026", time: "21:00", teamA: "Senegal 🇸🇳", teamB: "Irak 🇮🇶", locked: false, scoreA: "", scoreB: "" },
+            { id: 63, round: 3, date: "27.06.2026", time: "02:00", teamA: "Rep. Zielonego Prz. 🇨🇻", teamB: "Arabia Saudyjska 🇸🇦", locked: false, scoreA: "", scoreB: "" },
+            { id: 64, round: 3, date: "27.06.2026", time: "02:00", teamA: "Urugwaj 🇺🇾", teamB: "Hiszpania 🇪🇸", locked: false, scoreA: "", scoreB: "" },
+            { id: 65, round: 3, date: "27.06.2026", time: "05:00", teamA: "Nowa Zelandia 🇳🇿", teamB: "Belgia 🇧🇪", locked: false, scoreA: "", scoreB: "" },
+            { id: 66, round: 3, date: "27.06.2026", time: "05:00", teamA: "Egipt 🇪🇬", teamB: "Iran 🇮🇷", locked: false, scoreA: "", scoreB: "" },
+            { id: 67, round: 3, date: "27.06.2026", time: "17:00", teamA: "Panama 🇵🇦", teamB: "Anglia 🏴󠁧󠁢󠁥󠁮

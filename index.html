@@ -48,7 +48,7 @@
         <div id="main-content" class="hidden space-y-6">
             <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                 <p class="text-slate-300"><span id="welcome-text">Gracz</span>: <strong id="user-display" class="text-emerald-400"></strong></p>
-                <p id="instruction-text" class="text-xs text-slate-400">Obstaw wyniki wszystkich 3 kolejek grupowej fazy.</p>
+                <p id="instruction-text" class="text-xs text-slate-400">Obstaw wyniki wszystkich 3 kolejki grupowej fazy.</p>
             </div>
 
             <div class="flex flex-wrap gap-2 justify-center bg-slate-950/40 p-2 rounded-xl border border-slate-800">
@@ -123,7 +123,6 @@
             }
         };
 
-        // Pełny słownik tłumaczeń nazw państw (bez flag)
         const teamTranslations = {
             pl: {
                 "Meksyk": "Meksyk", "RPA": "RPA", "Korea Płd.": "Korea Płd.", "Czechy": "Czechy",
@@ -148,7 +147,7 @@
                 "Niemcy": "Germany", "Curacao": "Curacao", "Holandia": "Netherlands", "Japonia": "Japan",
                 "Wybrzeże Kości Sł.": "Ivory Coast", "Ekwador": "Ecuador", "Szwecja": "Sweden",
                 "Tunezja": "Tunisia", "Hiszpania": "Spain", "Rep. Zielonego Prz.": "Cape Verde",
-                "Belgia": "Belgium", "Egipt": "Egypt", "Arabia Saudyjska": "Saudi Arabia", "Urugwaj": "Uruguay",
+                "Belgia": "Belgium", "Egipt": "Egypt", "Arabia Saudyjska": "Saudi Arabia", "Urugwaj": "Urugwaj",
                 "Iran": "Iran", "Nowa Zelandia": "New Zealand", "Francja": "France", "Senegal": "Senegal",
                 "Irak": "Iraq", "Norwegia": "Norway", "Argentyna": "Argentina", "Algieria": "Algeria",
                 "Austria": "Austria", "Jordania": "Jordan", "Portugalia": "Portugal", "DR Kongo": "DR Congo",
@@ -161,7 +160,6 @@
         let nickname = '';
         let currentFilter = 'all';
 
-        // Baza danych 72 meczów bez przedrostków flagowych
         const matches = [
             // KOLEJKA 1
             { id: 1, round: 1, date: "11.06.2026", time: "19:00", teamA: "Meksyk", teamB: "RPA", scoreA: 2, scoreB: 1 },
@@ -242,7 +240,6 @@
             { id: 72, round: 3, date: "27.06.2026", time: "22:00", teamA: "Jordania", teamB: "Argentyna", scoreA: "", scoreB: "" }
         ];
 
-        // Funkcja sprawdzająca automatycznie, czy czas na typowanie minął
         function isMatchLocked(match) {
             const dateParts = match.date.split('.'); 
             const timeParts = match.time.split(':'); 
@@ -278,7 +275,6 @@
             document.getElementById('lang-btn').innerText = data.langBtn;
             document.getElementById('nickname-input').placeholder = data.placeholder;
 
-            // Tłumaczenie przycisków filtrowania
             document.getElementById('filter-all').innerText = data.filterAll;
             document.getElementById('filter-1').innerText = data.filter1;
             document.getElementById('filter-2').innerText = data.filter2;
@@ -314,6 +310,58 @@
             renderMatches();
         }
 
+        // Nowa funkcja pomocnicza: renderuje środek jednej, konkretnej karty meczu
+        function renderSingleCard(card, match) {
+            const locked = isMatchLocked(match);
+            card.dataset.locked = locked ? "true" : "false";
+
+            if (locked) {
+                card.className = "flex flex-col sm:flex-row items-center justify-between p-3 rounded-xl border transition gap-2 bg-slate-800/20 border-slate-800/60 text-slate-500";
+            } else {
+                card.className = "flex flex-col sm:flex-row items-center justify-between p-3 rounded-xl border transition gap-2 bg-slate-800 border-slate-700/80 hover:border-slate-600 text-white shadow-md";
+            }
+
+            card.innerHTML = '';
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = "text-center sm:text-left flex sm:flex-col items-center sm:items-start gap-2 sm:gap-0";
+            
+            let badgeHtml = '<span class="text-[11px] font-semibold bg-slate-950 px-2 py-0.5 rounded text-slate-400">' + match.date + ' ' + match.time + '</span>';
+            if (locked) {
+                badgeHtml += '<span class="text-[10px] text-amber-500/80 font-bold uppercase tracking-tight mt-0.5">[' + langData[currentLang].lockedTag + ']</span>';
+            }
+            infoDiv.innerHTML = badgeHtml;
+
+            const teamsDiv = document.createElement('div');
+            teamsDiv.className = "flex items-center gap-2 justify-center w-full sm:w-auto";
+            
+            let inputA = '';
+            let inputB = '';
+
+            if (locked) {
+                inputA = '<span class="w-10 text-center font-bold text-slate-500 bg-slate-900/40 py-1 rounded border border-slate-800">' + (match.scoreA === "" ? "-" : match.scoreA) + '</span>';
+                inputB = '<span class="w-10 text-center font-bold text-slate-500 bg-slate-900/40 py-1 rounded border border-slate-800">' + (match.scoreB === "" ? "-" : match.scoreB) + '</span>';
+            } else {
+                const classA = match.scoreA === "" ? "border-red-500 bg-red-950/20 focus:border-red-400" : "border-slate-600 focus:border-emerald-400";
+                const classB = match.scoreB === "" ? "border-red-500 bg-red-950/20 focus:border-red-400" : "border-slate-600 focus:border-emerald-400";
+
+                inputA = '<input type="number" min="0" placeholder="- " value="' + match.scoreA + '" oninput="updateScore(' + match.id + ', \'A\', this)" class="w-10 bg-slate-950 border ' + classA + ' rounded text-center py-1 font-bold text-emerald-400 focus:outline-none text-sm transition-colors duration-200">';
+                inputB = '<input type="number" min="0" placeholder="- " value="' + match.scoreB + '" oninput="updateScore(' + match.id + ', \'B\', this)" class="w-10 bg-slate-950 border ' + classB + ' rounded text-center py-1 font-bold text-emerald-400 focus:outline-none text-sm transition-colors duration-200">';
+            }
+
+            const translatedTeamA = teamTranslations[currentLang][match.teamA] || match.teamA;
+            const translatedTeamB = teamTranslations[currentLang][match.teamB] || match.teamB;
+
+            teamsDiv.innerHTML = '<span class="text-right w-32 md:w-40 font-medium text-sm truncate">' + translatedTeamA + '</span>' +
+                                 inputA +
+                                 '<span class="text-slate-600 font-bold text-xs">:</span>' +
+                                 inputB +
+                                 '<span class="text-left w-32 md:w-40 font-medium text-sm truncate">' + translatedTeamB + '</span>';
+
+            card.appendChild(infoDiv);
+            card.appendChild(teamsDiv);
+        }
+
         function renderMatches() {
             const container = document.getElementById('matches-container');
             container.innerHTML = '';
@@ -331,54 +379,10 @@
                     container.appendChild(roundHeader);
                 }
 
-                const locked = isMatchLocked(match);
-
                 const card = document.createElement('div');
-                if (locked) {
-                    card.className = "flex flex-col sm:flex-row items-center justify-between p-3 rounded-xl border transition gap-2 bg-slate-800/20 border-slate-800/60 text-slate-500";
-                } else {
-                    card.className = "flex flex-col sm:flex-row items-center justify-between p-3 rounded-xl border transition gap-2 bg-slate-800 border-slate-700/80 hover:border-slate-600 text-white shadow-md";
-                }
-
-                const infoDiv = document.createElement('div');
-                infoDiv.className = "text-center sm:text-left flex sm:flex-col items-center sm:items-start gap-2 sm:gap-0";
+                card.id = 'match-card-' + match.id; // Nadanie unikalnego ID dla karty
                 
-                let badgeHtml = '<span class="text-[11px] font-semibold bg-slate-950 px-2 py-0.5 rounded text-slate-400">' + match.date + ' ' + match.time + '</span>';
-                if (locked) {
-                    badgeHtml += '<span class="text-[10px] text-amber-500/80 font-bold uppercase tracking-tight mt-0.5">[' + langData[currentLang].lockedTag + ']</span>';
-                }
-                infoDiv.innerHTML = badgeHtml;
-
-                const teamsDiv = document.createElement('div');
-                teamsDiv.className = "flex items-center gap-2 justify-center w-full sm:w-auto";
-                
-                let inputA = '';
-                let inputB = '';
-
-                if (locked) {
-                    inputA = '<span class="w-10 text-center font-bold text-slate-500 bg-slate-900/40 py-1 rounded border border-slate-800">' + (match.scoreA === "" ? "-" : match.scoreA) + '</span>';
-                    inputB = '<span class="w-10 text-center font-bold text-slate-500 bg-slate-900/40 py-1 rounded border border-slate-800">' + (match.scoreB === "" ? "-" : match.scoreB) + '</span>';
-                } else {
-                    // Dodanie klas warunkowych dla brakujących typów przy renderowaniu
-                    const classA = match.scoreA === "" ? "border-red-500 bg-red-950/20 focus:border-red-400" : "border-slate-600 focus:border-emerald-400";
-                    const classB = match.scoreB === "" ? "border-red-500 bg-red-950/20 focus:border-red-400" : "border-slate-600 focus:border-emerald-400";
-
-                    inputA = '<input type="number" min="0" placeholder="- " value="' + match.scoreA + '" oninput="updateScore(' + match.id + ', \'A\', this)" class="w-10 bg-slate-950 border ' + classA + ' rounded text-center py-1 font-bold text-emerald-400 focus:outline-none text-sm transition-colors duration-200">';
-                    inputB = '<input type="number" min="0" placeholder="- " value="' + match.scoreB + '" oninput="updateScore(' + match.id + ', \'B\', this)" class="w-10 bg-slate-950 border ' + classB + ' rounded text-center py-1 font-bold text-emerald-400 focus:outline-none text-sm transition-colors duration-200">';
-                }
-
-                // Pobranie przetłumaczonych nazw drużyn ze słownika
-                const translatedTeamA = teamTranslations[currentLang][match.teamA] || match.teamA;
-                const translatedTeamB = teamTranslations[currentLang][match.teamB] || match.teamB;
-
-                teamsDiv.innerHTML = '<span class="text-right w-32 md:w-40 font-medium text-sm truncate">' + translatedTeamA + '</span>' +
-                                     inputA +
-                                     '<span class="text-slate-600 font-bold text-xs">:</span>' +
-                                     inputB +
-                                     '<span class="text-left w-32 md:w-40 font-medium text-sm truncate">' + translatedTeamB + '</span>';
-
-                card.appendChild(infoDiv);
-                card.appendChild(teamsDiv);
+                renderSingleCard(card, match);
                 container.appendChild(card);
             });
         }
@@ -390,7 +394,6 @@
                 if (team === 'A') match.scoreA = value;
                 if (team === 'B') match.scoreB = value;
 
-                // Dynamiczna zmiana klas elementu input bez pełnego przeładowania listy (wygoda pisania)
                 if (value === "") {
                     inputEl.classList.add('border-red-500', 'bg-red-950/20', 'focus:border-red-400');
                     inputEl.classList.remove('border-slate-600', 'focus:border-emerald-400');
@@ -425,7 +428,6 @@
                 if (currentFilter !== 'all' && m.round !== currentFilter) return;
                 const locked = isMatchLocked(m);
                 
-                // Zapisz do pliku nazwy państw w wybranym języku
                 const tA = teamTranslations[currentLang][m.teamA] || m.teamA;
                 const tB = teamTranslations[currentLang][m.teamB] || m.teamB;
                 
@@ -442,9 +444,19 @@
             URL.revokeObjectURL(link.href);
         }
 
-        // Automatyczne załadowanie tekstów przy otwarciu strony
         window.onload = function() {
             updateTexts();
+            
+            // AUTOMATYCZNY INTERWAŁ (Działa w tle co 5 sekund)
+            setInterval(function() {
+                matches.forEach(match => {
+                    const card = document.getElementById('match-card-' + match.id);
+                    // Odświeża pojedynczy mecz TYLKO wtedy, gdy był otwarty (false), ale czas minął
+                    if (card && card.dataset.locked === "false" && isMatchLocked(match)) {
+                        renderSingleCard(card, match);
+                    }
+                });
+            }, 5000);
         };
     </script>
 </body>

@@ -86,7 +86,7 @@
                 alertFinished: "Wypełnij wszystkie dostępne (niezablokowane) mecze w wybranej puli przed wygenerowaniem pliku!",
                 langBtn: "🇬🇧 EN",
                 lockedTag: "Rozpoczęty / Zakończony",
-                placeholder: "Twój nick",
+                placeholder: "Twój nick z DC...",
                 filterAll: "Wszystkie",
                 filter1: "Kolejka 1",
                 filter2: "Kolejka 2",
@@ -109,7 +109,7 @@
                 alertFinished: "Please fill in all available (unlocked) matches in the selection before generating the file!",
                 langBtn: "🇵🇱 PL",
                 lockedTag: "Started / Finished",
-                placeholder: "Your nickname",
+                placeholder: "Your DC nick...",
                 filterAll: "All",
                 filter1: "Round 1",
                 filter2: "Round 2",
@@ -359,8 +359,12 @@
                     inputA = '<span class="w-10 text-center font-bold text-slate-500 bg-slate-900/40 py-1 rounded border border-slate-800">' + (match.scoreA === "" ? "-" : match.scoreA) + '</span>';
                     inputB = '<span class="w-10 text-center font-bold text-slate-500 bg-slate-900/40 py-1 rounded border border-slate-800">' + (match.scoreB === "" ? "-" : match.scoreB) + '</span>';
                 } else {
-                    inputA = '<input type="number" min="0" placeholder="- " value="' + match.scoreA + '" onchange="updateScore(' + match.id + ', \'A\', this.value)" class="w-10 bg-slate-950 border border-slate-600 rounded text-center py-1 font-bold text-emerald-400 focus:outline-none focus:border-emerald-400 text-sm">';
-                    inputB = '<input type="number" min="0" placeholder="- " value="' + match.scoreB + '" onchange="updateScore(' + match.id + ', \'B\', this.value)" class="w-10 bg-slate-950 border border-slate-600 rounded text-center py-1 font-bold text-emerald-400 focus:outline-none focus:border-emerald-400 text-sm">';
+                    // Dodanie klas warunkowych dla brakujących typów przy renderowaniu
+                    const classA = match.scoreA === "" ? "border-red-500 bg-red-950/20 focus:border-red-400" : "border-slate-600 focus:border-emerald-400";
+                    const classB = match.scoreB === "" ? "border-red-500 bg-red-950/20 focus:border-red-400" : "border-slate-600 focus:border-emerald-400";
+
+                    inputA = '<input type="number" min="0" placeholder="- " value="' + match.scoreA + '" oninput="updateScore(' + match.id + ', \'A\', this)" class="w-10 bg-slate-950 border ' + classA + ' rounded text-center py-1 font-bold text-emerald-400 focus:outline-none text-sm transition-colors duration-200">';
+                    inputB = '<input type="number" min="0" placeholder="- " value="' + match.scoreB + '" oninput="updateScore(' + match.id + ', \'B\', this)" class="w-10 bg-slate-950 border ' + classB + ' rounded text-center py-1 font-bold text-emerald-400 focus:outline-none text-sm transition-colors duration-200">';
                 }
 
                 // Pobranie przetłumaczonych nazw drużyn ze słownika
@@ -379,11 +383,21 @@
             });
         }
 
-        function updateScore(id, team, value) {
+        function updateScore(id, team, inputEl) {
+            const value = inputEl.value;
             const match = matches.find(m => m.id === id);
             if (match && !isMatchLocked(match)) {
                 if (team === 'A') match.scoreA = value;
                 if (team === 'B') match.scoreB = value;
+
+                // Dynamiczna zmiana klas elementu input bez pełnego przeładowania listy (wygoda pisania)
+                if (value === "") {
+                    inputEl.classList.add('border-red-500', 'bg-red-950/20', 'focus:border-red-400');
+                    inputEl.classList.remove('border-slate-600', 'focus:border-emerald-400');
+                } else {
+                    inputEl.classList.remove('border-red-500', 'bg-red-950/20', 'focus:border-red-400');
+                    inputEl.classList.add('border-slate-600', 'focus:border-emerald-400');
+                }
             }
         }
 
